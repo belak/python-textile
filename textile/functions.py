@@ -21,7 +21,7 @@ Additions and fixes Copyright (c) 2006 Alex Shiels http://thresholdstate.com/
 import re
 import uuid
 import string
-from urlparse import urlparse
+from urlparse import urlparse, urljoin
 
 from textile.tools import sanitizer, imagesize
 
@@ -80,7 +80,8 @@ class Textile(object):
     )
 
     def __init__(self, restricted=False, lite=False, noimage=False,
-                 auto_link=False, get_sizes=False):
+                 auto_link=False, get_sizes=False, base_url=None,
+                 base_image_url=None):
         """docstring for __init__"""
         self.restricted = restricted
         self.lite = lite
@@ -92,6 +93,10 @@ class Textile(object):
         self.shelf = {}
         self.rel = ''
         self.html_type = 'xhtml'
+
+        # Simple additions to make relative URLs relative to a base
+        self.base_url = base_url
+        self.base_image_url = base_image_url
 
     def textile(self, text, rel=None, head_offset=0, html_type='xhtml',
                 sanitize=False):
@@ -676,7 +681,7 @@ class Textile(object):
         (scheme, netloc) = urlparse(url)[0:2]
         return not scheme and not netloc
 
-    def relURL(self, url):
+    def relURL(self, url, image=False):
         """
         >>> t = Textile()
         >>> t.relURL("http://www.google.com/")
@@ -689,6 +694,14 @@ class Textile(object):
         scheme = urlparse(url)[0]
         if self.restricted and scheme and scheme not in self.url_schemes:
             return '#'
+
+        if self.isRelURL(url):
+            if image:
+                if self.base_image_url:
+                    url = urljoin(self.base_image_url, url)
+            elif self.base_url:
+                url = urljoin(self.base_url, url)
+
         return url
 
     def shelve(self, text):
@@ -912,7 +925,7 @@ class Textile(object):
             href = self.checkRefs(href)
 
         url = self.checkRefs(url)
-        url = self.relURL(url)
+        url = self.relURL(url, image=True)
 
         out = []
         if href:
@@ -968,7 +981,7 @@ class Textile(object):
 
 
 def textile(text, head_offset=0, html_type='xhtml', auto_link=False,
-            encoding=None, output=None):
+            encoding=None, output=None, base_url=None, base_image_url=None):
     """
     Apply Textile to a block of text.
 
@@ -979,12 +992,14 @@ def textile(text, head_offset=0, html_type='xhtml', auto_link=False,
     html_type - 'xhtml' or 'html' style tags (default: 'xhtml')
 
     """
-    return Textile(auto_link=auto_link).textile(text, head_offset=head_offset,
-                                                  html_type=html_type)
+    return Textile(auto_link=auto_link, base_url=base_url,
+                   base_image_url=base_image_url).textile(text,
+                                                          head_offset=head_offset,
+                                                          html_type=html_type)
 
 
 def textile_restricted(text, lite=True, noimage=True, html_type='xhtml',
-                       auto_link=False):
+                       auto_link=False, base_url=None, base_image_url=None):
     """
     Apply Textile to a block of text, with restrictions designed for weblog
     comments and other untrusted input.  Raw HTML is escaped, style attributes
@@ -998,6 +1013,7 @@ def textile_restricted(text, lite=True, noimage=True, html_type='xhtml',
     noimage - disable image tags (default: True)
 
     """
-    return Textile(restricted=True, lite=lite,
-                   noimage=noimage, auto_link=auto_link).textile(
+    return Textile(restricted=True, lite=lite, base_url=base_url,
+                   base_image_url=base_image_url, noimage=noimage,
+                   auto_link=auto_link).textile(
         text, rel='nofollow', html_type=html_type)
