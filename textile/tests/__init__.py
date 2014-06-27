@@ -440,3 +440,14 @@ class Tests():
         result = "\t<table>\n\t\t<tr>\n\t\t\t<td><code>&#60;A1&#62;</code></td>\n\t\t\t<td><code>&#60;A2&#62;</code> <code>&#60;A3&#62;</code></td>\n\t\t</tr>\n\t\t<tr>\n\t\t\t<td>*B1*</td>\n\t\t\t<td>*B2* *B3*</td>\n\t\t</tr>\n\t</table>"
         expect = textile.textile(test)
         eq_(result, expect)
+
+    def testRelativeURLs(self):
+        test = '!test/sample.jpg!'
+        result = '\t<p><img src="http://example.com/imgs/test/sample.jpg" alt="" /></p>'
+        expect = textile.textile(test, base_image_url='http://example.com/imgs/')
+        eq_(result, expect)
+
+        test = 'I searched "here":./?q=hello%20world.'
+        result = '\t<p>I searched <a href="http://google.com/?q=hello%20world">here</a>.</p>'
+        expect = textile.textile(test, base_url='http://google.com/')
+        eq_(result, expect)

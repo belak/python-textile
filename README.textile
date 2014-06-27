@@ -31,3 +31,20 @@ Install the 'textile' folder on your python path, or easy_install http://github.
 >>> 
 </code>
 </pre>
+
+h2. Relative URLs
+
+You can add a base to link urls using the base_url option and a base to image URLs using the base_image_url option on either of the functions to generate textile.
+
+<pre>
+<code>
+>>> import textile
+>>> s = """
+... "README":README.textile
+... """
+>>> url = 'http://github.com/chrisdrackett/python-textile/tree/master/'
+>>> html = textile.textile(s, base_url=url)
+>>> print html
+    <p><a href="http://github.com/chrisdrackett/python-textile/tree/master/README.textile">README</a></p>
+</code>
+</pre>
